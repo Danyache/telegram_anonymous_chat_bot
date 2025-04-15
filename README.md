@@ -25,20 +25,19 @@
 ### Способ 1: Установка через Docker (рекомендуется)
 
 1. Установите Docker:
-   - **Mac**: 
-     - Через [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-     - Или через Homebrew: `brew install --cask docker`
+   - Через [Docker Desktop](https://www.docker.com/products/docker-desktop/) на Windows или Mac
+   - Или через Homebrew (только на Mac): `brew install --cask docker`
 
 2. Клонируйте репозиторий:
    ```bash
-   git clone https://github.com/your-username/telegram_anonymous_chat_bot.git
+   git clone https://github.com/danyache1812/telegram_anonymous_chat_bot.git
    cd telegram_anonymous_chat_bot
    ```
 
 3. Настройте файл `.env`:
    - Скопируйте пример конфигурации вручную, удалив расширение файла или следующей командой: `cp .env.example .env`
    - Откройте файл `.env` в любом текстовом редакторе
-   - Замените значения BOT_TOKEN и CHANNEL_ID на ваши данные
+   - Замените значения `BOT_TOKEN` и `CHANNEL_ID` на ваши данные
 
 4. Запустите бота:
    ```bash
