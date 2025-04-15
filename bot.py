@@ -16,7 +16,9 @@ from utils import (
     send_sticker_to_channel,
     broadcast_sticker,
     send_video_note_to_channel,
-    broadcast_video_note
+    broadcast_video_note,
+    send_voice_to_channel,
+    broadcast_voice
 )
 
 
@@ -108,7 +110,8 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
         # Check message properties
         has_photo = bool(message.photo)
         has_text = bool(message.text)
-        logging.info(f"Message properties - has_photo: {has_photo}, has_text: {has_text}")
+        has_voice = bool(hasattr(message, 'voice') and message.voice)
+        logging.info(f"Message properties - has_photo: {has_photo}, has_text: {has_text}, has_voice: {has_voice}")
         
         if not message.from_user:
             await message.answer("Error: Could not identify user. Please try again.")
@@ -128,6 +131,9 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
             log_message = "[STICKER]"
         elif content_type == 'video_note':
             log_message = "[VIDEO NOTE]"
+        elif has_voice:
+            caption = message.caption or ""
+            log_message = f"[VOICE] " + (caption[:200] + ("..." if len(caption) > 200 else ""))
         elif is_forwarded:
             log_message = "[FORWARDED MESSAGE]"
         
@@ -332,10 +338,56 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
             
             return
         
+        # Handle voice messages
+        elif content_type == 'voice' or has_voice:
+            logging.info("Processing voice message")
+            
+            # Check if voice is not empty
+            if not message.voice:
+                logging.error("Voice is empty despite content_type being 'voice'")
+                return
+            
+            # Get voice file_id
+            voice_file_id = message.voice.file_id
+            caption = message.caption or ""
+            caption_entities = message.caption_entities
+            logging.info(f"Received voice from user {user_id} with file_id: {voice_file_id}, caption: {caption}")
+            
+            # Forward to channel
+            try:
+                logging.info(f"Sending voice to channel {channel_id_int}")
+                await send_voice_to_channel(
+                    bot, 
+                    channel_id_int, 
+                    voice_file_id,
+                    caption=caption,
+                    caption_entities=caption_entities
+                )
+                logging.info("Voice sent to channel successfully")
+            except Exception as e:
+                logging.error(f"Failed to send voice to channel: {e}")
+            
+            # Broadcast to other users
+            try:
+                logging.info(f"Broadcasting voice to {len(users)} users")
+                await broadcast_voice(
+                    bot, 
+                    users, 
+                    user_id, 
+                    voice_file_id,
+                    caption=caption,
+                    caption_entities=caption_entities
+                )
+                logging.info("Voice broadcast to users successfully")
+            except Exception as e:
+                logging.error(f"Failed to broadcast voice: {e}")
+            
+            return
+        
         # Handle other message types (not supported)
         else:
             logging.info(f"Unsupported message type received: {content_type}")
-            await message.answer("Sorry, I can only forward text, photos, stickers, video notes, and forwarded messages at this time.")
+            await message.answer("Sorry, I can only forward text, photos, stickers, video notes, voice messages, and forwarded messages at this time.")
     
     except Exception as e:
         logging.error(f"Error processing message: {e}")
