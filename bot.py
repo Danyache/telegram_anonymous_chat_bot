@@ -112,7 +112,6 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
         channel_id = os.getenv("CHANNEL_ID")
         if not channel_id:
             logging.error("CHANNEL_ID not found in environment variables")
-            await message.answer("Channel ID not configured. Please contact the bot administrator.")
             return
         
         # Convert channel_id to int
@@ -120,7 +119,6 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
             channel_id_int = int(channel_id)
         except ValueError:
             logging.error(f"Invalid channel ID: {channel_id}")
-            await message.answer("Invalid channel ID. Please contact the bot administrator.")
             return
         
         # Handle forwarded messages
@@ -155,7 +153,6 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
                 )
             except Exception as e:
                 logging.error(f"Failed to forward message to channel: {e}")
-                await message.answer("Failed to forward message to the channel. The admin has been notified.")
             
             # Broadcast to other users
             try:
@@ -170,8 +167,6 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
             except Exception as e:
                 logging.error(f"Failed to broadcast forwarded message: {e}")
             
-            # Confirm to the sender
-            await message.answer("Your forwarded message has been shared with original attribution!")
             return
             
         # Handle photo messages - use content_type check as primary
@@ -180,7 +175,6 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
             # Check if photo is not empty
             if not message.photo:
                 logging.error("Photo is empty despite content_type being 'photo'")
-                await message.answer("Error processing your photo. Please try again.")
                 return
                 
             # Get the largest photo available (best quality)
@@ -197,7 +191,6 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
                 logging.info("Photo sent to channel successfully")
             except Exception as e:
                 logging.error(f"Failed to send photo to channel: {e}")
-                await message.answer("Your photo was sent to other users, but failed to send to the channel.")
             
             # Broadcast to other users
             try:
@@ -207,8 +200,6 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
             except Exception as e:
                 logging.error(f"Failed to broadcast photo: {e}")
             
-            # Confirm to the sender
-            await message.answer("Your photo has been sent anonymously!")
             return
         
         # Handle text messages
@@ -217,7 +208,6 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
             # Ensure text is not None
             if not message.text:
                 logging.error("Text is empty despite content_type being 'text'")
-                await message.answer("Error processing your message. Please try again.")
                 return
                 
             text = message.text
@@ -228,13 +218,10 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
                 await send_to_channel(bot, channel_id_int, text)
             except Exception as e:
                 logging.error(f"Failed to send message to channel: {e}")
-                await message.answer("Your message was sent to other users, but failed to send to the channel. The admin has been notified.")
             
             # Broadcast to other users
             await broadcast_message(bot, users, user_id, text)
             
-            # Confirm to the sender
-            await message.answer("Your message has been sent anonymously!")
             return
         
         # Handle other message types (not supported)
