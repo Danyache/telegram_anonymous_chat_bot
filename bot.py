@@ -49,15 +49,12 @@ async def start_handler(message: types.Message) -> None:
 # Handler for the /testchannel command:
 async def test_channel_handler(message: types.Message, bot: Bot) -> None:
     """
-    Tests the connection to the channel by sending a test message.
+    Tests the connection to the channel without sending any messages.
     """
     if not message.from_user:
         await message.answer("Error: Could not identify user.")
         return
         
-    # Only allow admins to run this command
-    # In a real bot, you'd check if the user is an admin
-    
     await message.answer("Testing channel connection...")
     
     channel_id = os.getenv("CHANNEL_ID")
@@ -72,8 +69,9 @@ async def test_channel_handler(message: types.Message, bot: Bot) -> None:
         # Try with direct channel ID
         try:
             direct_id = int(channel_id)
-            await bot.send_message(chat_id=direct_id, text="Test message (direct ID)")
-            await message.answer("✅ Direct channel ID works")
+            # Just get chat info instead of sending a message
+            chat = await bot.get_chat(chat_id=direct_id)
+            await message.answer(f"✅ Channel connection successful\nChannel name: {chat.title}")
         except Exception as e:
             await message.answer(f"❌ Direct channel ID failed: {str(e)}")
             
@@ -81,8 +79,9 @@ async def test_channel_handler(message: types.Message, bot: Bot) -> None:
         if not str(channel_id).startswith('-100') and str(channel_id).startswith('-'):
             try:
                 modified_id = int('-100' + str(channel_id)[1:])
-                await bot.send_message(chat_id=modified_id, text="Test message (modified ID)")
-                await message.answer(f"✅ Modified channel ID works: {modified_id}")
+                # Just get chat info instead of sending a message
+                chat = await bot.get_chat(chat_id=modified_id)
+                await message.answer(f"✅ Channel connection successful using modified ID: {modified_id}\nChannel name: {chat.title}")
             except Exception as e:
                 await message.answer(f"❌ Modified channel ID failed: {str(e)}")
         
@@ -116,6 +115,24 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
             return
             
         user_id = message.from_user.id
+        
+        # Log user ID and message content
+        log_message = ""
+        if has_text and message.text:
+            log_message = message.text[:200] + ("..." if len(message.text) > 200 else "")
+        elif has_photo and message.caption:
+            log_message = f"[PHOTO] " + (message.caption[:200] + ("..." if len(message.caption) > 200 else ""))
+        elif has_photo:
+            log_message = "[PHOTO WITHOUT CAPTION]"
+        elif content_type == 'sticker':
+            log_message = "[STICKER]"
+        elif content_type == 'video_note':
+            log_message = "[VIDEO NOTE]"
+        elif is_forwarded:
+            log_message = "[FORWARDED MESSAGE]"
+        
+        logging.info(f"Message from user {user_id}: {log_message}")
+        
         users = load_users()
         users = register_user(users, user_id)
         
