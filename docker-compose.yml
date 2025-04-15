@@ -3,6 +3,7 @@ version: '3'
 services:
   telegram-bot:
     build: .
+    container_name: telegram-bot
     restart: always
     volumes:
       # Mount only the users.json file as persistent storage
