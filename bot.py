@@ -11,7 +11,8 @@ from utils import (
     load_users, 
     register_user,
     send_photo_to_channel,
-    broadcast_photo
+    broadcast_photo,
+    broadcast_forwarded_message
 )
 
 
@@ -91,6 +92,10 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
         content_type = message.content_type if hasattr(message, 'content_type') else "unknown"
         logging.info(f"Received message with content_type: {content_type}")
         
+        # Check if it's a forwarded message
+        is_forwarded = bool(message.forward_from or message.forward_from_chat)
+        logging.info(f"Is forwarded message: {is_forwarded}")
+        
         # Check message properties
         has_photo = bool(message.photo)
         has_text = bool(message.text)
@@ -118,8 +123,59 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
             await message.answer("Invalid channel ID. Please contact the bot administrator.")
             return
         
+        # Handle forwarded messages
+        if is_forwarded:
+            logging.info("Processing forwarded message")
+            user_comment = ""
+            
+            # If there's additional caption/text from the user, extract it
+            if message.caption and not message.forward_from_chat:
+                user_comment = message.caption
+            elif message.text and not message.forward_from_chat and content_type == 'text':
+                # For text messages, we can't easily separate user comments from forwarded text
+                # The whole text is considered part of the forwarded message
+                pass
+            
+            # First, send the user's comment anonymously (if any)
+            if user_comment:
+                try:
+                    logging.info(f"Sending user comment to channel: {user_comment}")
+                    await send_to_channel(bot, channel_id_int, user_comment)
+                    await broadcast_message(bot, users, user_id, user_comment)
+                except Exception as e:
+                    logging.error(f"Failed to send user comment: {e}")
+            
+            # Forward original message to channel with attribution preserved
+            try:
+                logging.info(f"Forwarding message to channel {channel_id_int}")
+                await bot.forward_message(
+                    chat_id=channel_id_int,
+                    from_chat_id=message.chat.id,
+                    message_id=message.message_id
+                )
+            except Exception as e:
+                logging.error(f"Failed to forward message to channel: {e}")
+                await message.answer("Failed to forward message to the channel. The admin has been notified.")
+            
+            # Broadcast to other users
+            try:
+                logging.info(f"Broadcasting forwarded message to other users")
+                await broadcast_forwarded_message(
+                    bot, 
+                    users, 
+                    user_id, 
+                    message.chat.id, 
+                    message.message_id
+                )
+            except Exception as e:
+                logging.error(f"Failed to broadcast forwarded message: {e}")
+            
+            # Confirm to the sender
+            await message.answer("Your forwarded message has been shared with original attribution!")
+            return
+            
         # Handle photo messages - use content_type check as primary
-        if content_type == 'photo' or message.photo:
+        elif content_type == 'photo' or message.photo:
             logging.info("Processing photo message")
             # Check if photo is not empty
             if not message.photo:

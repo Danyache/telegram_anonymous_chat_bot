@@ -108,6 +108,36 @@ async def broadcast_photo(
             except Exception as e:
                 logging.error(f"Error sending photo to user {user_id}: {e}")
 
+# Function to broadcast a forwarded message to users
+async def broadcast_forwarded_message(
+    bot: Bot,
+    active_users: List[int],
+    exclude_user_id: int,
+    from_chat_id: int,
+    message_id: int
+) -> None:
+    """
+    Broadcasts a forwarded message to all active users except the sender.
+    
+    Parameters:
+      bot: The Telegram Bot instance.
+      active_users: A list of user chat IDs to send the message to.
+      exclude_user_id: The sender's ID to be excluded from broadcasting.
+      from_chat_id: The original chat ID containing the message.
+      message_id: The ID of the message to forward.
+    """
+    for user_id in active_users:
+        if user_id != exclude_user_id:
+            try:
+                # Use forward_message to preserve the forwarded status
+                await bot.forward_message(
+                    chat_id=user_id,
+                    from_chat_id=from_chat_id,
+                    message_id=message_id
+                )
+            except Exception as e:
+                logging.error(f"Error forwarding message to user {user_id}: {e}")
+
 # Functions to manage users storage:
 def load_users() -> List[int]:
     """
