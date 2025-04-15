@@ -1,6 +1,6 @@
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-from aiogram.types import ContentType
+from aiogram.types import ContentType, BotCommand, BotCommandScopeDefault
 import asyncio
 import logging
 import os
@@ -31,9 +31,15 @@ async def start_handler(message: types.Message) -> None:
         users = register_user(users, user_id)
         
         await message.answer(
-            "Welcome to the Anonymous Chat Bot!\n"
-            "Any message you send here will be forwarded anonymously to the channel "
-            "and to all other users of this bot."
+            "👋 <b>Добро пожаловать в Анонимный Чат-бот!</b>\n\n"
+            "Этот бот позволяет вам анонимно общаться с другими пользователями в канале \"Анонимное Завтра Вечером\".\n\n"
+            "<b>Как он работает:</b>\n"
+            "• Все сообщения, которые вы отправляете, анонимно пересылаются в канал\n"
+            "• Эти сообщения также отправляются всем другим пользователям\n"
+            "• Вы будете получать сообщения от других пользователей\n"
+            "• Никто не будет знать, кто отправил какое сообщение\n\n"
+            "<b>Ваша приватность защищена!</b> Начните отправлять сообщения прямо сейчас.",
+            parse_mode="HTML"
         )
     else:
         await message.answer("Error: Could not identify user. Please try again.")
@@ -287,6 +293,19 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
         traceback.print_exc()
         await message.answer("An error occurred while processing your message. Please try again later.")
 
+# Set bot commands and description
+async def set_bot_commands(bot: Bot) -> None:
+    """
+    Sets up the bot commands list that is shown in the bot interface.
+    """
+    commands = [
+        BotCommand(command="start", description="Register with the bot and see welcome message"),
+        BotCommand(command="testchannel", description="Test the connection to the channel (admin only)")
+    ]
+    
+    await bot.set_my_commands(commands, scope=BotCommandScopeDefault())
+    logging.info("Bot commands have been set")
+
 # Function to register all handlers with the Dispatcher:
 def register_handlers(dp: Dispatcher, bot: Bot) -> None:
     """
@@ -343,6 +362,9 @@ async def main() -> None:
     # Initialize bot and dispatcher with parse_mode to handle all message types
     bot = Bot(token=bot_token)
     dp = Dispatcher()
+    
+    # Set bot commands
+    await set_bot_commands(bot)
     
     # Register handlers
     register_handlers(dp, bot)
