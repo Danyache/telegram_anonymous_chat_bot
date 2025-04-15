@@ -14,7 +14,9 @@ from utils import (
     broadcast_photo,
     broadcast_forwarded_message,
     send_sticker_to_channel,
-    broadcast_sticker
+    broadcast_sticker,
+    send_video_note_to_channel,
+    broadcast_video_note
 )
 
 
@@ -282,10 +284,41 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
             
             return
         
+        # Handle video notes (circle messages)
+        elif content_type == 'video_note' or hasattr(message, 'video_note') and message.video_note:
+            logging.info("Processing video note (circle message)")
+            
+            # Check if video note is not empty
+            if not message.video_note:
+                logging.error("Video note is empty despite content_type being 'video_note'")
+                return
+            
+            # Get video note file_id
+            video_note_file_id = message.video_note.file_id
+            logging.info(f"Received video note from user {user_id} with file_id: {video_note_file_id}")
+            
+            # Forward to channel
+            try:
+                logging.info(f"Sending video note to channel {channel_id_int}")
+                await send_video_note_to_channel(bot, channel_id_int, video_note_file_id)
+                logging.info("Video note sent to channel successfully")
+            except Exception as e:
+                logging.error(f"Failed to send video note to channel: {e}")
+            
+            # Broadcast to other users
+            try:
+                logging.info(f"Broadcasting video note to {len(users)} users")
+                await broadcast_video_note(bot, users, user_id, video_note_file_id)
+                logging.info("Video note broadcast to users successfully")
+            except Exception as e:
+                logging.error(f"Failed to broadcast video note: {e}")
+            
+            return
+        
         # Handle other message types (not supported)
         else:
             logging.info(f"Unsupported message type received: {content_type}")
-            await message.answer("Sorry, I can only forward text, photos, stickers, and forwarded messages at this time.")
+            await message.answer("Sorry, I can only forward text, photos, stickers, video notes, and forwarded messages at this time.")
     
     except Exception as e:
         logging.error(f"Error processing message: {e}")

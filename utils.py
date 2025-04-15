@@ -254,3 +254,50 @@ async def broadcast_sticker(
                 await bot.send_sticker(chat_id=user_id, sticker=sticker_file_id)
             except Exception as e:
                 logging.error(f"Error sending sticker to user {user_id}: {e}")
+
+# Function to send a video note to the channel
+async def send_video_note_to_channel(bot: Bot, channel_id: int, video_note_file_id: str) -> None:
+    """
+    Sends a video note (circle message) to the designated Telegram channel using the provided bot.
+    
+    Parameters:
+      bot: The Telegram Bot instance.
+      channel_id: The target channel's numeric ID.
+      video_note_file_id: The file_id of the video note to send.
+    """
+    try:
+        # Ensure channel_id is properly formatted
+        channel_id_str = str(channel_id)
+        if not channel_id_str.startswith('-100') and channel_id_str.startswith('-'):
+            channel_id_str = '-100' + channel_id_str[1:]
+            channel_id = int(channel_id_str)
+            
+        logging.info(f"Attempting to send video note to channel: {channel_id}")
+        await bot.send_video_note(chat_id=channel_id, video_note=video_note_file_id)
+        logging.info("Video note sent to channel successfully")
+    except Exception as e:
+        logging.error(f"Error sending video note to channel {channel_id}: {e}")
+        traceback.print_exc()
+
+# Function to broadcast a video note to active users
+async def broadcast_video_note(
+    bot: Bot,
+    active_users: List[int],
+    exclude_user_id: int,
+    video_note_file_id: str
+) -> None:
+    """
+    Broadcasts a video note (circle message) to all active users except the sender.
+    
+    Parameters:
+      bot: The Telegram Bot instance.
+      active_users: A list of user chat IDs to send the message to.
+      exclude_user_id: The sender's ID to be excluded from broadcasting.
+      video_note_file_id: The file_id of the video note to send.
+    """
+    for user_id in active_users:
+        if user_id != exclude_user_id:
+            try:
+                await bot.send_video_note(chat_id=user_id, video_note=video_note_file_id)
+            except Exception as e:
+                logging.error(f"Error sending video note to user {user_id}: {e}")
