@@ -8,7 +8,7 @@ import traceback
 
 
 # Function to forward a message to a specific channel:
-async def send_to_channel(bot: Bot, channel_id: int, message_text: str) -> None:
+async def send_to_channel(bot: Bot, channel_id: int, message_text: str, entities=None) -> None:
     """
     Sends the message text to the designated Telegram channel using the provided bot.
     
@@ -16,6 +16,7 @@ async def send_to_channel(bot: Bot, channel_id: int, message_text: str) -> None:
       bot: The Telegram Bot instance.
       channel_id: The target channel's numeric ID.
       message_text: The text of the message to send.
+      entities: Optional message entities to preserve formatting.
     """
     try:
         # Ensure channel_id is properly formatted
@@ -27,7 +28,11 @@ async def send_to_channel(bot: Bot, channel_id: int, message_text: str) -> None:
             channel_id = int(channel_id_str)
             
         logging.info(f"Attempting to send message to channel: {channel_id}")
-        await bot.send_message(chat_id=channel_id, text=message_text)
+        await bot.send_message(
+            chat_id=channel_id, 
+            text=message_text,
+            entities=entities  # Pass entities to preserve formatting
+        )
         logging.info("Message sent to channel successfully")
     except Exception as e:
         logging.error(f"Error sending message to channel {channel_id}: {e}")
@@ -35,7 +40,7 @@ async def send_to_channel(bot: Bot, channel_id: int, message_text: str) -> None:
         traceback.print_exc()
 
 # Function to send image to the channel
-async def send_photo_to_channel(bot: Bot, channel_id: int, photo_file_id: str, caption: Optional[str] = None) -> None:
+async def send_photo_to_channel(bot: Bot, channel_id: int, photo_file_id: str, caption: Optional[str] = None, caption_entities=None) -> None:
     """
     Sends a photo to the designated Telegram channel using the provided bot.
     
@@ -44,6 +49,7 @@ async def send_photo_to_channel(bot: Bot, channel_id: int, photo_file_id: str, c
       channel_id: The target channel's numeric ID.
       photo_file_id: The file_id of the photo to send.
       caption: Optional caption for the photo.
+      caption_entities: Optional caption entities to preserve formatting.
     """
     try:
         # Ensure channel_id is properly formatted
@@ -53,11 +59,15 @@ async def send_photo_to_channel(bot: Bot, channel_id: int, photo_file_id: str, c
             channel_id = int(channel_id_str)
             
         logging.info(f"Attempting to send photo to channel: {channel_id}")
-        await bot.send_photo(chat_id=channel_id, photo=photo_file_id, caption=caption)
+        await bot.send_photo(
+            chat_id=channel_id, 
+            photo=photo_file_id, 
+            caption=caption,
+            caption_entities=caption_entities
+        )
         logging.info("Photo sent to channel successfully")
     except Exception as e:
         logging.error(f"Error sending photo to channel {channel_id}: {e}")
-        import traceback
         traceback.print_exc()
 
 # Function to broadcast a message to active users (excluding the sender):
@@ -65,7 +75,8 @@ async def broadcast_message(
     bot: Bot,
     active_users: List[int],
     exclude_user_id: int,
-    message_text: str
+    message_text: str,
+    entities=None
 ) -> None:
     """
     Broadcasts the message to all active users except the sender.
@@ -75,11 +86,16 @@ async def broadcast_message(
       active_users: A list of user chat IDs to send the message to.
       exclude_user_id: The sender's ID to be excluded from broadcasting.
       message_text: The text of the message to broadcast.
+      entities: Optional message entities to preserve formatting.
     """
     for user_id in active_users:
         if user_id != exclude_user_id:
             try:
-                await bot.send_message(chat_id=user_id, text=message_text)
+                await bot.send_message(
+                    chat_id=user_id, 
+                    text=message_text,
+                    entities=entities  # Pass entities to preserve formatting
+                )
             except Exception as e:
                 logging.error(f"Error sending message to user {user_id}: {e}")
 
@@ -89,7 +105,8 @@ async def broadcast_photo(
     active_users: List[int],
     exclude_user_id: int,
     photo_file_id: str,
-    caption: Optional[str] = None
+    caption: Optional[str] = None,
+    caption_entities=None
 ) -> None:
     """
     Broadcasts a photo to all active users except the sender.
@@ -100,11 +117,17 @@ async def broadcast_photo(
       exclude_user_id: The sender's ID to be excluded from broadcasting.
       photo_file_id: The file_id of the photo to send.
       caption: Optional caption for the photo.
+      caption_entities: Optional caption entities to preserve formatting.
     """
     for user_id in active_users:
         if user_id != exclude_user_id:
             try:
-                await bot.send_photo(chat_id=user_id, photo=photo_file_id, caption=caption)
+                await bot.send_photo(
+                    chat_id=user_id, 
+                    photo=photo_file_id, 
+                    caption=caption,
+                    caption_entities=caption_entities
+                )
             except Exception as e:
                 logging.error(f"Error sending photo to user {user_id}: {e}")
 
@@ -184,3 +207,50 @@ def register_user(users: List[int], user_id: int) -> List[int]:
         save_users(users)
         logging.info(f"New user registered: {user_id}")
     return users
+
+# Function to send a sticker to the channel
+async def send_sticker_to_channel(bot: Bot, channel_id: int, sticker_file_id: str) -> None:
+    """
+    Sends a sticker to the designated Telegram channel using the provided bot.
+    
+    Parameters:
+      bot: The Telegram Bot instance.
+      channel_id: The target channel's numeric ID.
+      sticker_file_id: The file_id of the sticker to send.
+    """
+    try:
+        # Ensure channel_id is properly formatted
+        channel_id_str = str(channel_id)
+        if not channel_id_str.startswith('-100') and channel_id_str.startswith('-'):
+            channel_id_str = '-100' + channel_id_str[1:]
+            channel_id = int(channel_id_str)
+            
+        logging.info(f"Attempting to send sticker to channel: {channel_id}")
+        await bot.send_sticker(chat_id=channel_id, sticker=sticker_file_id)
+        logging.info("Sticker sent to channel successfully")
+    except Exception as e:
+        logging.error(f"Error sending sticker to channel {channel_id}: {e}")
+        traceback.print_exc()
+
+# Function to broadcast a sticker to active users
+async def broadcast_sticker(
+    bot: Bot,
+    active_users: List[int],
+    exclude_user_id: int,
+    sticker_file_id: str
+) -> None:
+    """
+    Broadcasts a sticker to all active users except the sender.
+    
+    Parameters:
+      bot: The Telegram Bot instance.
+      active_users: A list of user chat IDs to send the message to.
+      exclude_user_id: The sender's ID to be excluded from broadcasting.
+      sticker_file_id: The file_id of the sticker to send.
+    """
+    for user_id in active_users:
+        if user_id != exclude_user_id:
+            try:
+                await bot.send_sticker(chat_id=user_id, sticker=sticker_file_id)
+            except Exception as e:
+                logging.error(f"Error sending sticker to user {user_id}: {e}")

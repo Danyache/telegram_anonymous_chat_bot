@@ -10,6 +10,8 @@ A Telegram bot that enables anonymous communication between users.
 - Simple registration via /start command
 - Support for forwarded messages with preserved attribution
 - Photo sharing support
+- Sticker sharing support
+- Text formatting preservation (bold, italic, links, etc.)
 
 ## Setup
 
@@ -59,7 +61,7 @@ A Telegram bot that enables anonymous communication between users.
 ## Usage
 
 1. Start the bot by sending the `/start` command
-2. Send any text message or photo to the bot:
+2. Send any text message, photo, or sticker to the bot:
    - It will be forwarded anonymously to the channel
    - It will be sent to all other users of the bot
 3. Forward messages from other chats to the bot:

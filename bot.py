@@ -12,7 +12,9 @@ from utils import (
     register_user,
     send_photo_to_channel,
     broadcast_photo,
-    broadcast_forwarded_message
+    broadcast_forwarded_message,
+    send_sticker_to_channel,
+    broadcast_sticker
 )
 
 
@@ -125,10 +127,13 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
         if is_forwarded:
             logging.info("Processing forwarded message")
             user_comment = ""
+            comment_entities = None
             
             # If there's additional caption/text from the user, extract it
             if message.caption and not message.forward_from_chat:
                 user_comment = message.caption
+                comment_entities = message.caption_entities
+                logging.info(f"Forwarded message has caption with {len(comment_entities) if comment_entities else 0} formatting entities")
             elif message.text and not message.forward_from_chat and content_type == 'text':
                 # For text messages, we can't easily separate user comments from forwarded text
                 # The whole text is considered part of the forwarded message
@@ -138,8 +143,8 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
             if user_comment:
                 try:
                     logging.info(f"Sending user comment to channel: {user_comment}")
-                    await send_to_channel(bot, channel_id_int, user_comment)
-                    await broadcast_message(bot, users, user_id, user_comment)
+                    await send_to_channel(bot, channel_id_int, user_comment, entities=comment_entities)
+                    await broadcast_message(bot, users, user_id, user_comment, entities=comment_entities)
                 except Exception as e:
                     logging.error(f"Failed to send user comment: {e}")
             
@@ -181,13 +186,20 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
             photo = message.photo[-1]
             photo_file_id = photo.file_id
             caption = message.caption or ""
-            
+            caption_entities = message.caption_entities  # Extract caption entities for formatting
             logging.info(f"Received photo from user {user_id} with file_id: {photo_file_id}, caption: {caption}")
+            logging.info(f"Caption has {len(caption_entities) if caption_entities else 0} formatting entities")
             
             # Forward to channel
             try:
                 logging.info(f"Sending photo to channel {channel_id_int}")
-                await send_photo_to_channel(bot, channel_id_int, photo_file_id, caption)
+                await send_photo_to_channel(
+                    bot, 
+                    channel_id_int, 
+                    photo_file_id, 
+                    caption=caption,
+                    caption_entities=caption_entities
+                )
                 logging.info("Photo sent to channel successfully")
             except Exception as e:
                 logging.error(f"Failed to send photo to channel: {e}")
@@ -195,7 +207,14 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
             # Broadcast to other users
             try:
                 logging.info(f"Broadcasting photo to {len(users)} users")
-                await broadcast_photo(bot, users, user_id, photo_file_id, caption)
+                await broadcast_photo(
+                    bot, 
+                    users, 
+                    user_id, 
+                    photo_file_id, 
+                    caption=caption,
+                    caption_entities=caption_entities
+                )
                 logging.info("Photo broadcast to users successfully")
             except Exception as e:
                 logging.error(f"Failed to broadcast photo: {e}")
@@ -211,23 +230,56 @@ async def message_handler(message: types.Message, bot: Bot) -> None:
                 return
                 
             text = message.text
+            entities = message.entities  # Extract message entities for formatting
+            logging.info(f"Message has {len(entities) if entities else 0} formatting entities")
             
             # Forward to channel
             try:
                 logging.info(f"Forwarding message to channel {channel_id}")
-                await send_to_channel(bot, channel_id_int, text)
+                await send_to_channel(bot, channel_id_int, text, entities=entities)
             except Exception as e:
                 logging.error(f"Failed to send message to channel: {e}")
             
             # Broadcast to other users
-            await broadcast_message(bot, users, user_id, text)
+            await broadcast_message(bot, users, user_id, text, entities=entities)
+            
+            return
+        
+        # Handle sticker messages
+        elif content_type == 'sticker' or message.sticker:
+            logging.info("Processing sticker message")
+            
+            # Check if sticker is not empty
+            if not message.sticker:
+                logging.error("Sticker is empty despite content_type being 'sticker'")
+                return
+            
+            # Get sticker file_id
+            sticker_file_id = message.sticker.file_id
+            logging.info(f"Received sticker from user {user_id} with file_id: {sticker_file_id}")
+            
+            # Forward to channel
+            try:
+                logging.info(f"Sending sticker to channel {channel_id_int}")
+                await send_sticker_to_channel(bot, channel_id_int, sticker_file_id)
+                logging.info("Sticker sent to channel successfully")
+            except Exception as e:
+                logging.error(f"Failed to send sticker to channel: {e}")
+            
+            # Broadcast to other users
+            try:
+                logging.info(f"Broadcasting sticker to {len(users)} users")
+                await broadcast_sticker(bot, users, user_id, sticker_file_id)
+                logging.info("Sticker broadcast to users successfully")
+            except Exception as e:
+                logging.error(f"Failed to broadcast sticker: {e}")
             
             return
         
         # Handle other message types (not supported)
         else:
             logging.info(f"Unsupported message type received: {content_type}")
-            await message.answer("Sorry, I can only forward text and photos at this time.")
+            await message.answer("Sorry, I can only forward text, photos, stickers, and forwarded messages at this time.")
     
     except Exception as e:
         logging.error(f"Error processing message: {e}")
@@ -289,7 +341,7 @@ async def main() -> None:
         return
     
     # Initialize bot and dispatcher with parse_mode to handle all message types
-    bot = Bot(token=bot_token, parse_mode=None)
+    bot = Bot(token=bot_token)
     dp = Dispatcher()
     
     # Register handlers
