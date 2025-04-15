@@ -4,6 +4,7 @@ import os
 import json
 import logging
 from io import BytesIO
+import traceback
 
 
 # Function to forward a message to a specific channel:
@@ -31,7 +32,6 @@ async def send_to_channel(bot: Bot, channel_id: int, message_text: str) -> None:
     except Exception as e:
         logging.error(f"Error sending message to channel {channel_id}: {e}")
         # Print detailed error for debugging
-        import traceback
         traceback.print_exc()
 
 # Function to send image to the channel
@@ -152,7 +152,7 @@ def load_users() -> List[int]:
                 return json.load(file)
         return []
     except Exception as e:
-        print(f"Error loading users: {e}")
+        logging.error(f"Error loading users: {e}")
         return []
 
 def save_users(users: List[int]) -> None:
@@ -166,7 +166,7 @@ def save_users(users: List[int]) -> None:
         with open("users.json", "w") as file:
             json.dump(users, file)
     except Exception as e:
-        print(f"Error saving users: {e}")
+        logging.error(f"Error saving users: {e}")
 
 def register_user(users: List[int], user_id: int) -> List[int]:
     """
@@ -182,4 +182,5 @@ def register_user(users: List[int], user_id: int) -> List[int]:
     if user_id not in users:
         users.append(user_id)
         save_users(users)
+        logging.info(f"New user registered: {user_id}")
     return users

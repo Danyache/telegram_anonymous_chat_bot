@@ -10,3 +10,5 @@ users.json
 
 # Logs
 *.log
+# Keep the logs directory but not its contents
+!logs/.gitkeep

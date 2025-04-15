@@ -267,11 +267,20 @@ async def main() -> None:
     # Load environment variables
     load_dotenv()
     
-    # Configure logging
+    # Ensure logs directory exists
+    os.makedirs("/logs", exist_ok=True)
+    
+    # Configure logging to both console and file
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[
+            logging.StreamHandler(),  # Console handler
+            logging.FileHandler("/logs/bot.log")  # File handler with absolute path
+        ]
     )
+    
+    logging.info("Starting Telegram Anonymous Bot...")
     
     # Get bot token from environment
     bot_token = os.getenv("BOT_TOKEN")
@@ -287,7 +296,7 @@ async def main() -> None:
     register_handlers(dp, bot)
     
     # Start polling with allowed updates to ensure all message types are received
-    logging.info("Starting bot...")
+    logging.info("Bot is running. Press Ctrl+C to stop.")
     await dp.start_polling(bot, allowed_updates=["message", "edited_message", "channel_post", "edited_channel_post"])
 
 if __name__ == "__main__":

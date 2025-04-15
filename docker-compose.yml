@@ -10,5 +10,7 @@ services:
       - ./users.json:/app/users.json
       # Mount .env file for configuration
       - ./.env:/app/.env
+      # Mount logs directory to persist logs between container runs
+      - ./logs:/logs
     environment:
       - TZ=UTC  # Set timezone as needed 
