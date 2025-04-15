@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  telegram-bot:
+    build: .
+    container_name: telegram-bot
+    restart: always
+    volumes:
+      # Mount only the users.json file as persistent storage
+      - ./users.json:/app/users.json
+      # Mount .env file for configuration
+      - ./.env:/app/.env
+      # Mount logs directory to persist logs between container runs
+      - ./logs:/logs
+    environment:
+      - TZ=UTC  # Set timezone as needed 
