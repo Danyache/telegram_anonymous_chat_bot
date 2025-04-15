@@ -30,7 +30,7 @@
 
 2. Клонируйте репозиторий:
    ```bash
-   git clone https://github.com/danyache1812/telegram_anonymous_chat_bot.git
+   git clone https://github.com/Danyache/telegram_anonymous_chat_bot.git
    cd telegram_anonymous_chat_bot
    ```
 
@@ -56,7 +56,7 @@
 
 2. Клонируйте репозиторий:
    ```bash
-   git clone https://github.com/danyache1812/telegram_anonymous_chat_bot.git
+   git clone https://github.com/Danyache/telegram_anonymous_chat_bot.git
    cd telegram_anonymous_chat_bot
    ```
 
