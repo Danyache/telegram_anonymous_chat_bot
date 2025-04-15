@@ -11,6 +11,8 @@ A Telegram bot that enables anonymous communication between users.
 
 ## Setup
 
+### Option 1: Standard Setup
+
 1. Clone this repository
 2. Install the required dependencies:
    ```
@@ -29,6 +31,21 @@ A Telegram bot that enables anonymous communication between users.
    python bot.py
    ```
 
+### Option 2: Docker Setup
+
+1. Clone this repository
+2. Create a `.env` file with your bot token and channel ID (as shown above)
+3. Run with Docker Compose:
+   ```
+   docker-compose up -d
+   ```
+
+   Or build and run with Docker directly:
+   ```
+   docker build -t telegram-anonymous-bot .
+   docker run -d --restart always --name telegram-bot -v $(pwd)/users.json:/app/users.json -v $(pwd)/.env:/app/.env telegram-anonymous-bot
+   ```
+
 ## Usage
 
 1. Start the bot by sending the `/start` command
@@ -36,4 +53,3 @@ A Telegram bot that enables anonymous communication between users.
    - It will be forwarded anonymously to the channel
    - It will be sent to all other users of the bot
 3. All messages from other users will be received by you
-
