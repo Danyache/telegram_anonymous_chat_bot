@@ -1,114 +1,106 @@
-# Anonymous Telegram Chat Bot
+# Анонимный Telegram Чат-бот
 
-A Telegram bot that enables anonymous communication between users. 
+Бот для анонимной коммуникации между пользователями через Telegram.
 
-## Features
+## Что умеет бот
 
-- Users send messages to the bot
-- Messages are forwarded anonymously to a channel
-- Messages are broadcast to all other users of the bot
-- Simple registration via /start command
-- Support for forwarded messages with preserved attribution
-- Photo sharing support
-- Sticker sharing support
-- Text formatting preservation (bold, italic, links, etc.)
+- Пересылает сообщения анонимно в канал и другим пользователям
+- Поддерживает текст, фото, стикеры, видеокружки и пересланные сообщения
+- Сохраняет форматирование текста
+- Простая регистрация через команду /start
 
-## Setup
+## Установка и запуск
 
-### Option 1: Standard Setup
+### Подготовка
 
-1. Clone this repository
-2. Install the required dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-3. Create a `.env` file with the following variables:
-   ```
-   BOT_TOKEN=your_bot_token
-   CHANNEL_ID=your_channel_id
-   ```
-   - `BOT_TOKEN`: Get this by creating a bot through the [BotFather](https://t.me/botfather)
-   - `CHANNEL_ID`: The ID of your Telegram channel (the bot must be an admin of this channel)
+1. Создайте бота через [@BotFather](https://t.me/botfather) и получите токен бота
 
-4. Run the bot:
-   ```
-   python bot.py
+2. Создайте канал в Telegram и добавьте вашего бота как администратора
+
+3. Получите ID канала:
+   - Отправьте любое сообщение в ваш канал
+   - Перешлите это сообщение боту [@getidsbot](https://t.me/getidsbot)
+   - Найдите значение "Forwarded from chat" в ответе бота - это ID вашего канала
+
+### Способ 1: Установка через Docker (рекомендуется)
+
+1. Установите Docker:
+   - **Mac**: 
+     - Через [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+     - Или через Homebrew: `brew install --cask docker`
+
+2. Клонируйте репозиторий:
+   ```bash
+   git clone https://github.com/your-username/telegram_anonymous_chat_bot.git
+   cd telegram_anonymous_chat_bot
    ```
 
-### Option 2: Docker Setup
+3. Настройте файл `.env`:
+   - Скопируйте пример конфигурации вручную, удалив расширение файла или следующей командой: `cp .env.example .env`
+   - Откройте файл `.env` в любом текстовом редакторе
+   - Замените значения BOT_TOKEN и CHANNEL_ID на ваши данные
 
-1. Clone this repository
-2. Create a `.env` file with your bot token and channel ID (as shown above)
-3. Create a `logs` directory for storing logs:
-   ```
-   mkdir -p logs
-   ```
-4. Run with Docker Compose:
-   ```
+4. Запустите бота:
+   ```bash
    docker-compose up -d
    ```
 
-   Or build and run with Docker directly:
-   ```
-   docker build -t telegram-anonymous-bot .
-   docker run -d --restart always --name telegram-bot \
-     -v $(pwd)/users.json:/app/users.json \
-     -v $(pwd)/.env:/app/.env \
-     -v $(pwd)/logs:/logs \
-     telegram-anonymous-bot
+5. Проверьте, что бот работает:
+   ```bash
+   docker-compose ps
+   docker-compose logs
    ```
 
-## Usage
+### Способ 2: Запуск без Docker
 
-1. Start the bot by sending the `/start` command
-2. Send any text message, photo, or sticker to the bot:
-   - It will be forwarded anonymously to the channel
-   - It will be sent to all other users of the bot
-3. Forward messages from other chats to the bot:
-   - The forwarded message will be sent to the channel and other users with original attribution
-   - Any caption you add will be sent as a separate anonymous message
+1. Установите Python 3.7 или новее
 
-## Logging and Monitoring
-
-The bot uses a logging system that saves all activity to both the console and a persistent log file:
-
-1. Logs are stored in the `./logs` directory on your host machine
-2. The main log file is `./logs/bot.log`
-3. To view real-time logs while the bot is running:
-   ```
-   docker-compose logs -f
-   ```
-4. Or check the log file directly:
-   ```
-   tail -f logs/bot.log
+2. Клонируйте репозиторий:
+   ```bash
+   git clone https://github.com/danyache1812/telegram_anonymous_chat_bot.git
+   cd telegram_anonymous_chat_bot
    ```
 
-The logs contain information about:
-- Bot startup and initialization
-- Message handling (text, photos, forwards)
-- User registrations
-- Errors and exceptions
+3. Установите зависимости:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-Logs are preserved between container restarts and system reboots.
+4. Настройте файл `.env`:
+   - Скопируйте пример конфигурации: `cp .env.example .env`
+   - Откройте файл `.env` в любом текстовом редакторе
+   - Замените значения BOT_TOKEN и CHANNEL_ID на ваши данные
 
-## Troubleshooting
+5. Запустите бота:
+   ```bash
+   python bot.py
+   ```
 
-If messages aren't being sent to the channel:
-1. Ensure the bot is an administrator in the channel
-2. Try the `/testchannel` command to test the channel connection
-3. Check the logs for any errors
+## Перезапуск и обновление
 
-## Project Structure
+### Для Docker:
 
-- `bot.py` - Main bot implementation with message handlers
-- `utils.py` - Utility functions for message handling and user management
-- `users.json` - Storage for registered users (created automatically)
-- `.env` - Environment variables configuration
-- `Dockerfile` and `docker-compose.yml` - Docker configuration
-- `logs/` - Directory containing log files
+```bash
+# Перезапуск
+docker-compose restart
 
-## Requirements
+# Обновление (после внесения изменений)
+docker-compose down
+docker-compose up -d --build
+```
 
-- Python 3.7+
-- aiogram 3.20.0
-- python-dotenv 1.1.0
+### Без Docker:
+
+```bash
+# Остановите текущий процесс (Ctrl+C)
+# Запустите заново
+python bot.py
+```
+
+## Устранение неполадок
+
+Если сообщения не отправляются в канал:
+1. Убедитесь, что бот добавлен в канал как администратор
+2. Проверьте правильность ID канала в файле .env
+3. Запустите команду `/testchannel` в чате с ботом
+4. Проверьте логи: `docker-compose logs` или файл `logs/bot.log`
